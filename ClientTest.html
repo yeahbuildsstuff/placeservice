@@ -7,6 +7,7 @@
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
 
   <style>
     html, body {
@@ -83,26 +84,10 @@
 <script>
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
-// Force-create audio engine if Babylon didn't
-if (!BABYLON.Engine.audioEngine) {
-  BABYLON.Engine.audioEngine = new BABYLON.AudioEngine();
-  console.log("AudioEngine manually created");
-}
 
-window.addEventListener("pointerdown", () => {
-  const ctx = BABYLON.Engine.audioEngine?.audioContext;
-  if (ctx && ctx.state !== "running") {
-    ctx.resume().then(() => console.log("Audio context resumed"));
-  }
-});
-
-
-// Unlock audio on first click
-window.addEventListener("pointerdown", () => {
-  if (BABYLON.Engine.audioEngine) {
-    BABYLON.Engine.audioEngine.unlock();
-  }
-}, { once: true });
+// ============================================================
+// HELP FILE LOADING
+// ============================================================
 
 async function loadHelpFile(url) {
   const text = await fetch(url).then(r => r.text());
@@ -176,6 +161,9 @@ world.addContactMaterial(new CANNON.ContactMaterial(
   { friction: 1.0, restitution: 0.0 }
 ));
 
+// forward declaration so PLACE_CODE can call it
+let makeDraggableRef = null;
+
 // ============================================================
 // PLACE_CODE — ROOM + TEST BRICK
 // ============================================================
@@ -186,7 +174,6 @@ function PLACE_CODE(scene) {
 
   const roomWidth = 160;
   const roomDepth = 160;
-  const roomHeight = 60;
 
   let floor = BABYLON.MeshBuilder.CreateBox("floor", {
     width: roomWidth,
@@ -205,7 +192,7 @@ function PLACE_CODE(scene) {
   floorBody.position.set(0, -0.4, 0);
   world.addBody(floorBody);
 
-  // ⭐ Test brick
+  // Test brick
   const testBrick = BABYLON.MeshBuilder.CreateBox("testBrick", {
     width: 2,
     height: 1,
@@ -213,13 +200,12 @@ function PLACE_CODE(scene) {
   }, scene);
 
   testBrick.position = new BABYLON.Vector3(0, 0.5, 0);
-
-  const testMat = new BABYLON.StandardMaterial("testMat", scene);
-  testMat.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.7);
-  testMat.specularColor = new BABYLON.Color3(0, 0, 0);
-  testBrick.material = testMat;
-
   testBrick.draggable = true;
+
+  // Give physics ONLY because it's draggable (Option B)
+  if (makeDraggableRef) {
+    makeDraggableRef(testBrick);
+  }
 }
 
 // ============================================================
@@ -278,6 +264,9 @@ function createScene() {
   const rig = new BABYLON.TransformNode("rig", scene);
   rig.position.y = 5;
 
+  // store spawn point
+  const spawnPoint = rig.position.clone();
+
   const model = new BABYLON.TransformNode("model", scene);
   model.parent = rig;
 
@@ -303,11 +292,16 @@ function createScene() {
   const pastelBlue        = new BABYLON.Color3(128/255, 187/255, 219/255);
   const brightYellowGreen = new BABYLON.Color3(164/255, 189/255, 71/255);
 
+  // torso center = 2 → bottom = 1
   part("torso", 2, 2, 1, 2, 0, pastelBlue);
+
+  // legs moved DOWN 0.25 studs (visual alignment)
+ part("leftLeg", 1, 2, 1, 0, -0.5, brightYellowGreen);
+ part("rightLeg", 1, 2, 1, 0, 0.5, brightYellowGreen);
+
+
   part("leftArm", 1, 2, 1, 2, -1.5, brightYellow);
   part("rightArm", 1, 2, 1, 2, 1.5, brightYellow);
-  part("leftLeg", 1, 2, 1, 0, -0.5, brightYellowGreen);
-  part("rightLeg", 1, 2, 1, 0, 0.5, brightYellowGreen);
 
   BABYLON.SceneLoader.ImportMesh(
     "",
@@ -346,45 +340,67 @@ function createScene() {
       headOuter.material = faceMat;
     }
   );
+
   /* ============================================================
-     SOUND SYSTEM (2D NON‑SPATIAL AUDIO)
+     SOUND SYSTEM (TONE.JS)
      ============================================================ */
 
+  const SFX_BASE = "https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/sounds/";
   const sounds = {};
 
-  function loadSound(name, url, options = {}) {
-    console.log("Loading sound:", name, url);
-
-    sounds[name] = new BABYLON.Sound(
-      name,
-      url,
-      scene,
-      () => console.log("Loaded:", name),
-      {
-        volume: options.volume ?? 1.0,
-        loop: options.loop ?? false,
-        autoplay: false,
-        spatialSound: false   // <‑‑ FORCE 2D SOUND
-      }
-    );
+  function loadSound(name, file, options = {}) {
+    const player = new Tone.Player(SFX_BASE + file).toDestination();
+    if (options.loop) player.loop = true;
+    if (options.volumeDb !== undefined) player.volume.value = options.volumeDb;
+    player._playing = false;
+    sounds[name] = player;
   }
 
-  // LOAD CLASSIC ROBLOX SOUNDS
-  loadSound("footsteps", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/footsteps.mp3", { loop: true, volume: 0.6 });
-  loadSound("slingshot", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/Rubber%20band%20sling%20shot.wav");
-  loadSound("tool_ping", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/electronicpingshort.wav");
-  loadSound("explosion", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/Shoulder%20fired%20rocket.wav");
-  loadSound("ouch", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/Kid%20saying%20Ouch.wav");
-  loadSound("snap", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/snap.wav");
-  loadSound("bomb_tick", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/clickfast.wav", { loop: true, volume: 0.4 });
-  loadSound("ui_click", "https://raw.githubusercontent.com/yeahbuildsstuff/PlaceService/main/sounds/SWITCH3.wav");
+  let audioStarted = false;
+  let bombTickInterval = null;
+
+  function startBombTick() {
+    if (bombTickInterval) return;
+    bombTickInterval = setInterval(() => {
+      const p = sounds.bomb_tick;
+      if (p && p.loaded) {
+        try { p.start(); } catch(e) {}
+      }
+    }, 500);
+  }
+
+  function stopBombTick() {
+    if (!bombTickInterval) return;
+    clearInterval(bombTickInterval);
+    bombTickInterval = null;
+  }
+
+  function ensureAudioStarted() {
+    if (!audioStarted) {
+      Tone.start();
+      audioStarted = true;
+
+      loadSound("footsteps", "footsteps.mp3", { loop: true, volumeDb: -5 });
+      loadSound("slingshot", "Rubberbandslingshot.wav", { volumeDb: -3 });
+      loadSound("tool_ping", "electronicpingshort.wav", { volumeDb: -6 });
+      loadSound("explosion", "Shoulderfiredrocket.wav", { volumeDb: -2 });
+      loadSound("ouch", "KidsayingOuch.wav", { volumeDb: -4 });
+      loadSound("snap", "snap.wav", { volumeDb: -4 });
+      loadSound("bomb_tick", "clickfast.wav", { volumeDb: -10 });
+      loadSound("ui_click", "SWITCH3.wav", { volumeDb: -8 });
+    }
+  }
+
+  window.addEventListener("pointerdown", ensureAudioStarted, { once: true });
+  window.addEventListener("keydown", ensureAudioStarted, { once: true });
 
   /* ============================================================
-     UI BUTTONS (NOW THAT SOUNDS EXIST)
+     UI BUTTONS
      ============================================================ */
 
   document.getElementById("helpBtn").onclick = async () => {
-    if (sounds.ui_click) sounds.ui_click.play();
+    const p = sounds.ui_click;
+    if (p && p.loaded) try { p.start(); } catch(e) {}
     const html = await loadHelpFile(
       "https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/text_files/Controls.help"
     );
@@ -392,7 +408,8 @@ function createScene() {
   };
 
   document.getElementById("fullscreenBtn").onclick = () => {
-    if (sounds.ui_click) sounds.ui_click.play();
+    const p = sounds.ui_click;
+    if (p && p.loaded) try { p.start(); } catch(e) {}
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
     } else {
@@ -401,13 +418,15 @@ function createScene() {
   };
 
   document.getElementById("exitBtn").onclick = () => {
-    if (sounds.ui_click) sounds.ui_click.play();
+    const p = sounds.ui_click;
+    if (p && p.loaded) try { p.start(); } catch(e) {}
     window.location.href = "https://yeahbuildsstuff.github.io/gamemenuservice/";
   };
 
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") {
-      if (sounds.ui_click) sounds.ui_click.play();
+      const p = sounds.ui_click;
+      if (p && p.loaded) try { p.start(); } catch(e) {}
       hideHelpPopup();
     }
   });
@@ -550,10 +569,11 @@ function createScene() {
     btn.appendChild(num);
 
     btn.onclick = () => {
+      const ping = sounds.tool_ping;
       if (selectedToolIndex === index) {
         selectedToolIndex = -1;
         updateToolHighlight();
-        if (sounds.tool_ping) sounds.tool_ping.play();
+        if (ping && ping.loaded) try { ping.start(); } catch(e) {}
       } else {
         selectTool(index);
       }
@@ -578,7 +598,8 @@ function createScene() {
   function selectTool(i) {
     selectedToolIndex = i;
     updateToolHighlight();
-    if (sounds.tool_ping) sounds.tool_ping.play();
+    const ping = sounds.tool_ping;
+    if (ping && ping.loaded) try { ping.start(); } catch(e) {}
   }
 
   updateToolHighlight();
@@ -588,11 +609,12 @@ function createScene() {
     const n = parseInt(e.key);
     if (!isNaN(n) && n >= 1 && n <= toolButtons.length) {
       const index = n - 1;
+      const ping = sounds.tool_ping;
 
       if (selectedToolIndex === index) {
         selectedToolIndex = -1;
         updateToolHighlight();
-        if (sounds.tool_ping) sounds.tool_ping.play();
+        if (ping && ping.loaded) try { ping.start(); } catch(e) {}
       } else {
         selectTool(index);
       }
@@ -613,7 +635,23 @@ function createScene() {
 
   function makeDraggable(mesh) {
     mesh.draggable = true;
+
+    const bbox = mesh.getBoundingInfo().boundingBox.extendSize;
+    const shape = new CANNON.Box(new CANNON.Vec3(bbox.x, bbox.y, bbox.z));
+
+    const body = new CANNON.Body({
+      mass: 1,
+      material: groundMatPhys
+    });
+
+    body.addShape(shape);
+    body.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
+    world.addBody(body);
+    mesh.physicsBody = body;
   }
+
+  // expose to PLACE_CODE
+  makeDraggableRef = makeDraggable;
 
   function alignValue(v) {
     return v >= 0 ? Math.floor(v) : Math.ceil(v);
@@ -644,83 +682,122 @@ function createScene() {
   }
 
   /* ============================================================
-     SLINGSHOT PROJECTILE
+     PROJECTILE / EXPLOSION
      ============================================================ */
 
-  function spawnProjectile(options) {
-    const { radius, color, life, speed, isBomb } = options;
+  function spawnProjectile(opts) {
+    const forward = getHeadForward();
 
-    const forward = getHeadForward().negate();
+    // fire opposite of current forward (fix backwards)
+    const fireDir = forward.scale(-1);
 
-    const startPos = new BABYLON.Vector3(
-      rig.position.x,
-      rig.position.y + 3.5,
-      rig.position.z
-    ).add(forward.scale(2));
+    const startPos = rig.position
+      .add(new BABYLON.Vector3(0, 3, 0))
+      .add(fireDir.scale(2));
 
-    const mesh = BABYLON.MeshBuilder.CreateSphere("proj", { diameter: radius * 2 }, scene);
+    const mesh = BABYLON.MeshBuilder.CreateSphere("proj", { diameter: opts.radius * 2 }, scene);
+    mesh.position.copyFrom(startPos);
     const mat = new BABYLON.StandardMaterial("projMat", scene);
-    mat.diffuseColor = color;
+    mat.diffuseColor = opts.color;
     mat.specularColor = new BABYLON.Color3(0,0,0);
     mesh.material = mat;
 
     const body = new CANNON.Body({
       mass: 1,
-      material: groundMatPhys,
-      linearDamping: 0.1,
-      angularDamping: 0.1
+      material: groundMatPhys
     });
-    body.addShape(new CANNON.Sphere(radius));
+    body.addShape(new CANNON.Sphere(opts.radius));
     body.position.set(startPos.x, startPos.y, startPos.z);
 
-    body.velocity.set(
-      forward.x * speed,
-      2,
-      forward.z * speed
-    );
+    const vel = fireDir.scale(opts.speed);
+    body.velocity.set(vel.x, vel.y, vel.z);
 
     world.addBody(body);
 
-    projectiles.push({ mesh, body, life, isBomb });
+    projectiles.push({
+      mesh,
+      body,
+      life: opts.life,
+      isBomb: opts.isBomb
+    });
   }
 
-  /* ============================================================
-     EXPLOSION
-     ============================================================ */
-
   function explodeAt(position, radius, force) {
-    const explosion = BABYLON.MeshBuilder.CreateSphere("explosion", { diameter: radius * 2 }, scene);
 
+    /* ============================================================
+       PLAYER DAMAGE + REGEN
+       ============================================================ */
+
+    const playerDist = BABYLON.Vector3.Distance(
+      new BABYLON.Vector3(playerBody.position.x, playerBody.position.y, playerBody.position.z),
+      position
+    );
+
+    if (playerDist <= radius) {
+      const ouch = sounds.ouch;
+      if (ouch && ouch.loaded) try { ouch.start(); } catch(e) {}
+
+      // teleport player to spawn
+      playerBody.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
+      playerBody.velocity.set(0,0,0);
+
+      rig.position.copyFrom(spawnPoint);
+      model.rotation.y = 0; // reset rotation
+      camYaw = Math.PI / 2; // reset camera
+    }
+
+    /* ============================================================
+       EXPLODE DRAGGABLE PARTS ONLY
+       ============================================================ */
+
+    scene.meshes.forEach(m => {
+      if (!m.draggable) return; // ONLY draggable parts explode
+
+      const diff = m.position.subtract(position);
+      const dist = diff.length();
+      if (dist > radius || dist === 0) return;
+
+      // If no physics yet, give it now (only inside red sphere)
+      if (!m.physicsBody) {
+        const bbox = m.getBoundingInfo().boundingBox.extendSize;
+        const shape = new CANNON.Box(new CANNON.Vec3(bbox.x, bbox.y, bbox.z));
+
+        const body = new CANNON.Body({
+          mass: 1,
+          material: groundMatPhys
+        });
+
+        body.addShape(shape);
+        body.position.set(m.position.x, m.position.y, m.position.z);
+        world.addBody(body);
+        m.physicsBody = body;
+      }
+
+      // Apply explosion force
+      const dir = diff.normalize();
+      const strength = (radius - dist) / radius * force;
+
+      m.physicsBody.applyImpulse(
+        new CANNON.Vec3(dir.x * strength, dir.y * strength, dir.z * strength),
+        new CANNON.Vec3(0, 0, 0)
+      );
+    });
+
+    /* ============================================================
+       VISUAL EXPLOSION
+       ============================================================ */
+
+    const explosion = BABYLON.MeshBuilder.CreateSphere("explosion", { diameter: radius * 2 }, scene);
     const mat = new BABYLON.StandardMaterial("explosionMat", scene);
-    mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
     mat.emissiveColor = new BABYLON.Color3(1, 0, 0);
-    mat.disableLighting = true;
+    mat.diffuseColor  = new BABYLON.Color3(1, 0, 0);
+    mat.alpha = 1.0;
     explosion.material = mat;
     explosion.position.copyFrom(position);
 
-    if (sounds.explosion) sounds.explosion.play();
-
-    scene.meshes.forEach(m => {
-      if (!m.draggable) return;
-
-      const bounding = m.getBoundingInfo().boundingSphere;
-      const center = bounding.centerWorld;
-      const dist = BABYLON.Vector3.Distance(center, position);
-
-      if (dist < radius + bounding.radius) {
-        const dir = center.subtract(position).normalize();
-        m.position.addInPlace(dir.scale(force / dist));
-      }
-    });
-
-    const playerPos = rig.position.clone();
-    const distToPlayer = BABYLON.Vector3.Distance(playerPos, position);
-
-    if (distToPlayer <= radius) {
-      if (sounds.ouch) sounds.ouch.play();
-      rig.position.set(0, 5, 0);
-      playerBody.position.set(0, 10, 0);
-      playerBody.velocity.set(0, 0, 0);
+    const p = sounds.explosion;
+    if (p && p.loaded) {
+      try { p.start(); } catch(e) {}
     }
 
     setTimeout(() => explosion.dispose(), 300);
@@ -744,6 +821,15 @@ function createScene() {
       if (!draggedMesh || !pick) return;
       const pos = pick.pickedPoint.add(dragOffset);
       draggedMesh.position.copyFrom(alignVector3(pos));
+
+      if (draggedMesh.physicsBody) {
+        draggedMesh.physicsBody.position.set(
+          draggedMesh.position.x,
+          draggedMesh.position.y,
+          draggedMesh.position.z
+        );
+        draggedMesh.physicsBody.velocity.set(0,0,0);
+      }
     },
     pointerUp() {
       if (draggedMesh) {
@@ -756,7 +842,8 @@ function createScene() {
   ToolBehaviors.Copy = {
     pointerDown(pick) {
       if (!pick || !pick.pickedMesh || !pick.pickedMesh.draggable) return;
-      if (sounds.tool_ping) sounds.tool_ping.play();
+      const ping = sounds.tool_ping;
+      if (ping && ping.loaded) try { ping.start(); } catch(e) {}
 
       const original = pick.pickedMesh;
       const clone = original.clone(original.name + "_clone");
@@ -769,6 +856,15 @@ function createScene() {
     pointerMove(pick) {
       if (!draggedMesh || !pick) return;
       draggedMesh.position.copyFrom(alignVector3(pick.pickedPoint));
+
+      if (draggedMesh.physicsBody) {
+        draggedMesh.physicsBody.position.set(
+          draggedMesh.position.x,
+          draggedMesh.position.y,
+          draggedMesh.position.z
+        );
+        draggedMesh.physicsBody.velocity.set(0,0,0);
+      }
     },
     pointerUp() {
       if (draggedMesh) {
@@ -781,8 +877,14 @@ function createScene() {
   ToolBehaviors.Delete = {
     pointerDown(pick) {
       if (!pick || !pick.pickedMesh || !pick.pickedMesh.draggable) return;
-      if (sounds.snap) sounds.snap.play();
+      const snap = sounds.snap;
+      if (snap && snap.loaded) try { snap.start(); } catch(e) {}
+
       highlight.removeMesh(pick.pickedMesh);
+
+      if (pick.pickedMesh.physicsBody) {
+        world.removeBody(pick.pickedMesh.physicsBody);
+      }
       pick.pickedMesh.dispose();
     },
     pointerMove() {},
@@ -791,12 +893,14 @@ function createScene() {
 
   ToolBehaviors.SlingShot = {
     pointerDown() {
-      if (sounds.slingshot) sounds.slingshot.play();
+      const s = sounds.slingshot;
+      if (s && s.loaded) try { s.start(); } catch(e) {}
+
       spawnProjectile({
         radius: 1,
         color: new BABYLON.Color3(0.7,0.7,0.7),
         life: 10,
-        speed: 40,
+        speed: 80,
         isBomb: false
       });
     },
@@ -806,8 +910,9 @@ function createScene() {
 
   ToolBehaviors.Bomb = {
     pointerDown() {
-      if (sounds.tool_ping) sounds.tool_ping.play();
-      if (sounds.bomb_tick) sounds.bomb_tick.play();
+      const ping = sounds.tool_ping;
+      if (ping && ping.loaded) try { ping.start(); } catch(e) {}
+      startBombTick();
 
       const pos = new BABYLON.Vector3(
         rig.position.x,
@@ -819,8 +924,6 @@ function createScene() {
       const mat = new BABYLON.StandardMaterial("bombMat", scene);
       mat.diffuseColor = new BABYLON.Color3(0,0,0);
       mat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
-      mat.ambientColor = new BABYLON.Color3(0.2,0.2,0.2);
-      mat.disableLighting = false;
       mesh.material = mat;
       mesh.position.copyFrom(pos);
 
@@ -845,6 +948,10 @@ function createScene() {
     pointerUp() {}
   };
 
+  /* ============================================================
+     POINTER EVENTS
+     ============================================================ */
+
   let toolPointerDown = false;
 
   canvas.addEventListener("pointerdown", (e) => {
@@ -863,7 +970,8 @@ function createScene() {
     toolPointerDown = false;
     const toolType = currentToolType();
     const behavior = ToolBehaviors[toolType];
-    if (behavior && behavior.pointerUp) {      behavior.pointerUp();
+    if (behavior && behavior.pointerUp) {
+      behavior.pointerUp();
     }
   });
 
@@ -880,20 +988,6 @@ function createScene() {
   /* ============================================================
      MAIN UPDATE LOOP
      ============================================================ */
-
-scene.onReadyObservable.add(() => {
-  console.log("Scene ready — loading sounds");
-
-  loadSound("footsteps", "...", { loop: true, volume: 0.6 });
-  loadSound("slingshot", "...");
-  loadSound("tool_ping", "...");
-  loadSound("explosion", "...");
-  loadSound("ouch", "...");
-  loadSound("snap", "...");
-  loadSound("bomb_tick", "...", { loop: true, volume: 0.4 });
-  loadSound("ui_click", "...");
-});
-
 
   scene.onBeforeRenderObservable.add(() => {
     const dt = engine.getDeltaTime() / 1000;
@@ -912,10 +1006,15 @@ scene.onReadyObservable.add(() => {
     const isMoving = move.length() > 0.01;
     const onGround = playerBody.position.y <= rig.position.y + 0.2;
 
+        const foot = sounds.footsteps;
     if (isMoving && onGround) {
-      if (!sounds.footsteps.isPlaying) sounds.footsteps.play();
+      if (foot && foot.loaded && !foot._playing) {
+        try { foot.start(); foot._playing = true; } catch(e) {}
+      }
     } else {
-      if (sounds.footsteps.isPlaying) sounds.footsteps.stop();
+      if (foot && foot.loaded && foot._playing) {
+        try { foot.stop(); foot._playing = false; } catch(e) {}
+      }
     }
 
     if (isMoving) {
@@ -965,7 +1064,7 @@ scene.onReadyObservable.add(() => {
 
       if (p.life <= 0) {
         if (p.isBomb) {
-          if (sounds.bomb_tick && sounds.bomb_tick.isPlaying) sounds.bomb_tick.stop();
+          stopBombTick();
           explodeAt(p.mesh.position.clone(), 10, 40);
         }
         world.removeBody(p.body);
