@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/appicon.ico">
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Game</title>
+  <title>Interactive3D</title>
+  <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/appicon.ico">
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
@@ -50,6 +50,50 @@
 <body>
 
 <canvas id="renderCanvas"></canvas>
+
+<!-- ===== PLACE DATA (MODIFIED RBXL-STYLE XML) ===== -->
+<script id="placeData" type="text/plain">
+<!DOCTYPE placeXML>
+<place>
+
+  <config>
+    <title>Game</title>
+    <CharacterColors
+      ArmHeadColorR="245" ArmHeadColorG="205" ArmHeadColorB="48"
+      TorsoColorR="128" TorsoColorG="187" TorsoColorB="219"
+      LegsColorR="164" LegsColorG="189" LegsColorB="71"
+    />
+  </config>
+
+  <part
+    name="Baseplate"
+    r="200" g="200" b="200"
+    px="0" py="0" pz="0"
+    sx="64" sy="1" sz="64"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+  />
+
+  <part
+    name="Brick1"
+    r="200" g="200" b="200"
+    px="0" py="1" pz="0"
+    sx="2" sy="1" sz="2"
+    shape="Block"
+    draggable="true"
+    collision="true"
+    anchored="true"
+  />
+
+  <tool
+    type="Grab"
+    name="Grab"
+  />
+
+</place>
+</script>
 
 <div id="topButtons" style="
   position: absolute;
@@ -161,50 +205,138 @@ world.addContactMaterial(new CANNON.ContactMaterial(
   { friction: 1.0, restitution: 0.0 }
 ));
 
-// forward declaration so PLACE_CODE can call it
+// forward declaration so loader can call it
 let makeDraggableRef = null;
 
 // ============================================================
-// PLACE_CODE — ROOM + TEST BRICK
+// MODIFIED RBXL-STYLE PLACE LOADER
 // ============================================================
 
-function PLACE_CODE(scene) {
+function LOAD_PLACE_FROM_XML(xmlString, scene) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlString, "text/xml");
 
-  const floorcolor = new BABYLON.Color3(0.6,0.8,0.5);
+  // ===== CONFIG =====
+  const config = xml.getElementsByTagName("config")[0];
 
-  const roomWidth = 160;
-  const roomDepth = 160;
+  let characterColors = {
+    armHead: new BABYLON.Color3(245/255, 205/255, 48/255),
+    torso:   new BABYLON.Color3(128/255, 187/255, 219/255),
+    legs:    new BABYLON.Color3(164/255, 189/255, 71/255)
+  };
 
-  let floor = BABYLON.MeshBuilder.CreateBox("floor", {
-    width: roomWidth,
-    depth: roomDepth,
-    height: 1
-  }, scene);
-  floor.position = new BABYLON.Vector3(0, -0.4, 0);
+  if (config) {
+    const titleNode = config.getElementsByTagName("title")[0];
+    if (titleNode && titleNode.textContent) {
+      document.title = titleNode.textContent + " - Interactive3D";
+    }
 
-  let floorMat = new BABYLON.StandardMaterial("floorMat", scene);
-  floorMat.diffuseColor = floorcolor;
-  floorMat.specularColor = new BABYLON.Color3(0,0,0);
-  floor.material = floorMat;
+    const charNode = config.getElementsByTagName("CharacterColors")[0];
+    if (charNode) {
+      characterColors = {
+        armHead: new BABYLON.Color3(
+          parseFloat(charNode.getAttribute("ArmHeadColorR"))/255,
+          parseFloat(charNode.getAttribute("ArmHeadColorG"))/255,
+          parseFloat(charNode.getAttribute("ArmHeadColorB"))/255
+        ),
+        torso: new BABYLON.Color3(
+          parseFloat(charNode.getAttribute("TorsoColorR"))/255,
+          parseFloat(charNode.getAttribute("TorsoColorG"))/255,
+          parseFloat(charNode.getAttribute("TorsoColorB"))/255
+        ),
+        legs: new BABYLON.Color3(
+          parseFloat(charNode.getAttribute("LegsColorR"))/255,
+          parseFloat(charNode.getAttribute("LegsColorG"))/255,
+          parseFloat(charNode.getAttribute("LegsColorB"))/255
+        )
+      };
+    }
+  }
 
-  let floorBody = new CANNON.Body({ mass: 0, material: groundMatPhys });
-  floorBody.addShape(new CANNON.Box(new CANNON.Vec3(roomWidth/2, 0.4, roomDepth/2)));
-  floorBody.position.set(0, -0.4, 0);
-  world.addBody(floorBody);
+  window.characterColors = characterColors;
 
-  // Test brick
-  const testBrick = BABYLON.MeshBuilder.CreateBox("testBrick", {
-    width: 2,
-    height: 1,
-    depth: 2
-  }, scene);
+  // Parts
+  const parts = xml.getElementsByTagName("part");
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
 
-  testBrick.position = new BABYLON.Vector3(0, 0.5, 0);
-  testBrick.draggable = true;
+    const name = p.getAttribute("name") || ("Part_" + i);
 
-  // Give physics ONLY because it's draggable (Option B)
-  if (makeDraggableRef) {
-    makeDraggableRef(testBrick);
+    const r = parseFloat(p.getAttribute("r") || "200") / 255;
+    const g = parseFloat(p.getAttribute("g") || "200") / 255;
+    const b = parseFloat(p.getAttribute("b") || "200") / 255;
+
+    const px = parseFloat(p.getAttribute("px") || "0");
+    const py = parseFloat(p.getAttribute("py") || "0");
+    const pz = parseFloat(p.getAttribute("pz") || "0");
+
+    const sx = parseFloat(p.getAttribute("sx") || "4");
+    const sy = parseFloat(p.getAttribute("sy") || "1");
+    const sz = parseFloat(p.getAttribute("sz") || "4");
+
+    const shape = (p.getAttribute("shape") || "Block");
+    const draggable = (p.getAttribute("draggable") === "true");
+    const collision = (p.getAttribute("collision") !== "false");
+    const anchored = (p.getAttribute("anchored") === "true");
+
+    let mesh;
+    if (shape === "Sphere") {
+      mesh = BABYLON.MeshBuilder.CreateSphere(name, {
+        diameterX: sx,
+        diameterY: sy,
+        diameterZ: sz
+      }, scene);
+    } else {
+      mesh = BABYLON.MeshBuilder.CreateBox(name, {
+        width: sx,
+        height: sy,
+        depth: sz
+      }, scene);
+    }
+
+    mesh.position = new BABYLON.Vector3(px, py, pz);
+
+    const mat = new BABYLON.StandardMaterial(name + "_mat", scene);
+    mat.diffuseColor = new BABYLON.Color3(r, g, b);
+    mat.specularColor = new BABYLON.Color3(0, 0, 0);
+    mesh.material = mat;
+
+    mesh.isPickable = true;
+    mesh.draggable = draggable;
+
+    if (collision) {
+      const halfExtents = new CANNON.Vec3(sx / 2, sy / 2, sz / 2);
+      const shapeBox = new CANNON.Box(halfExtents);
+
+      const body = new CANNON.Body({
+        mass: anchored ? 0 : 1,
+        material: groundMatPhys
+      });
+
+      body.addShape(shapeBox);
+      body.position.set(px, py, pz);
+      world.addBody(body);
+      mesh.physicsBody = body;
+    }
+
+    if (draggable && makeDraggableRef) {
+      makeDraggableRef(mesh);
+    }
+  }
+
+  // Tools from XML (optional, merges with defaults)
+  const tools = xml.getElementsByTagName("tool");
+  for (let i = 0; i < tools.length; i++) {
+    const t = tools[i];
+    const type = t.getAttribute("type");
+    const name = t.getAttribute("name") || type;
+
+    if (type && window.toolDeclarations) {
+      const exists = window.toolDeclarations.some(td => td.type === type);
+      if (!exists) {
+        window.toolDeclarations.push({ type, name });
+      }
+    }
   }
 }
 
@@ -259,12 +391,14 @@ function createScene() {
   ambient.groundColor = new BABYLON.Color3(210/255, 210/255, 210/255);
   ambient.intensity = 0.6;
 
-  PLACE_CODE(scene);
+  const placeTag = document.getElementById("placeData");
+  if (placeTag) {
+    LOAD_PLACE_FROM_XML(placeTag.textContent, scene);
+  }
 
   const rig = new BABYLON.TransformNode("rig", scene);
   rig.position.y = 5;
 
-  // store spawn point
   const spawnPoint = rig.position.clone();
 
   const model = new BABYLON.TransformNode("model", scene);
@@ -288,18 +422,13 @@ function createScene() {
     return p;
   }
 
-  const brightYellow      = new BABYLON.Color3(245/255, 205/255, 48/255);
-  const pastelBlue        = new BABYLON.Color3(128/255, 187/255, 219/255);
-  const brightYellowGreen = new BABYLON.Color3(164/255, 189/255, 71/255);
+  const brightYellow      = window.characterColors.armHead;
+  const pastelBlue        = window.characterColors.torso;
+  const brightYellowGreen = window.characterColors.legs;
 
-  // torso center = 2 → bottom = 1
   part("torso", 2, 2, 1, 2, 0, pastelBlue);
-
-  // legs moved DOWN 0.25 studs (visual alignment)
- part("leftLeg", 1, 2, 1, 0, -0.5, brightYellowGreen);
- part("rightLeg", 1, 2, 1, 0, 0.5, brightYellowGreen);
-
-
+  part("leftLeg", 1, 2, 1, 0, -0.5, brightYellowGreen);
+  part("rightLeg", 1, 2, 1, 0, 0.5, brightYellowGreen);
   part("leftArm", 1, 2, 1, 2, -1.5, brightYellow);
   part("rightArm", 1, 2, 1, 2, 1.5, brightYellow);
 
@@ -337,7 +466,7 @@ function createScene() {
       faceMat.specularColor = new BABYLON.Color3(0, 0, 0);
       faceMat.backFaceCulling = false;
 
-      headOuter.material = faceMat;
+       headOuter.material = faceMat;
     }
   );
 
@@ -512,7 +641,7 @@ function createScene() {
      TOOL SYSTEM
      ============================================================ */
 
-  const toolDeclarations = [
+  window.toolDeclarations = [
     { type: "Grab",      name: "Grab" },
     { type: "Copy",      name: "Clone" },
     { type: "Delete",    name: "Delete" },
@@ -583,7 +712,7 @@ function createScene() {
     return btn;
   }
 
-  toolDeclarations.forEach((tool, i) => {
+  window.toolDeclarations.forEach((tool, i) => {
     toolButtons.push(createToolButton(tool, i));
   });
 
@@ -604,7 +733,6 @@ function createScene() {
 
   updateToolHighlight();
 
-  // NUMBER KEY TOGGLE
   window.addEventListener("keydown", e => {
     const n = parseInt(e.key);
     if (!isNaN(n) && n >= 1 && n <= toolButtons.length) {
@@ -623,7 +751,7 @@ function createScene() {
 
   function currentToolType() {
     if (selectedToolIndex === -1) return null;
-    return toolDeclarations[selectedToolIndex].type;
+    return window.toolDeclarations[selectedToolIndex].type;
   }
 
   function getMouseHit() {
@@ -650,7 +778,6 @@ function createScene() {
     mesh.physicsBody = body;
   }
 
-  // expose to PLACE_CODE
   makeDraggableRef = makeDraggable;
 
   function alignValue(v) {
@@ -667,10 +794,6 @@ function createScene() {
 
   const projectiles = [];
 
-  /* ============================================================
-     HEAD FORWARD VECTOR
-     ============================================================ */
-
   function getHeadForward() {
     const m = model.getWorldMatrix();
     const forward = BABYLON.Vector3.TransformNormal(
@@ -681,14 +804,9 @@ function createScene() {
     return forward.normalize();
   }
 
-  /* ============================================================
-     PROJECTILE / EXPLOSION
-     ============================================================ */
-
   function spawnProjectile(opts) {
     const forward = getHeadForward();
 
-    // fire opposite of current forward (fix backwards)
     const fireDir = forward.scale(-1);
 
     const startPos = rig.position
@@ -724,10 +842,6 @@ function createScene() {
 
   function explodeAt(position, radius, force) {
 
-    /* ============================================================
-       PLAYER DAMAGE + REGEN
-       ============================================================ */
-
     const playerDist = BABYLON.Vector3.Distance(
       new BABYLON.Vector3(playerBody.position.x, playerBody.position.y, playerBody.position.z),
       position
@@ -737,27 +851,21 @@ function createScene() {
       const ouch = sounds.ouch;
       if (ouch && ouch.loaded) try { ouch.start(); } catch(e) {}
 
-      // teleport player to spawn
       playerBody.position.set(spawnPoint.x, spawnPoint.y, spawnPoint.z);
       playerBody.velocity.set(0,0,0);
 
       rig.position.copyFrom(spawnPoint);
-      model.rotation.y = 0; // reset rotation
-      camYaw = Math.PI / 2; // reset camera
+      model.rotation.y = 0;
+      camYaw = Math.PI / 2;
     }
 
-    /* ============================================================
-       EXPLODE DRAGGABLE PARTS ONLY
-       ============================================================ */
-
     scene.meshes.forEach(m => {
-      if (!m.draggable) return; // ONLY draggable parts explode
+      if (!m.draggable) return;
 
       const diff = m.position.subtract(position);
       const dist = diff.length();
       if (dist > radius || dist === 0) return;
 
-      // If no physics yet, give it now (only inside red sphere)
       if (!m.physicsBody) {
         const bbox = m.getBoundingInfo().boundingBox.extendSize;
         const shape = new CANNON.Box(new CANNON.Vec3(bbox.x, bbox.y, bbox.z));
@@ -773,7 +881,6 @@ function createScene() {
         m.physicsBody = body;
       }
 
-      // Apply explosion force
       const dir = diff.normalize();
       const strength = (radius - dist) / radius * force;
 
@@ -782,10 +889,6 @@ function createScene() {
         new CANNON.Vec3(0, 0, 0)
       );
     });
-
-    /* ============================================================
-       VISUAL EXPLOSION
-       ============================================================ */
 
     const explosion = BABYLON.MeshBuilder.CreateSphere("explosion", { diameter: radius * 2 }, scene);
     const mat = new BABYLON.StandardMaterial("explosionMat", scene);
@@ -802,10 +905,6 @@ function createScene() {
 
     setTimeout(() => explosion.dispose(), 300);
   }
-
-  /* ============================================================
-     TOOL BEHAVIORS
-     ============================================================ */
 
   let draggedMesh = null;
   let dragOffset = null;
@@ -894,11 +993,11 @@ function createScene() {
   ToolBehaviors.SlingShot = {
     pointerDown() {
       const s = sounds.slingshot;
-      if (s && s.loaded) try { s.start(); } catch(e) {}
+          if (s && s.loaded) try { s.start(); } catch(e) {}
 
       spawnProjectile({
         radius: 1,
-        color: new BABYLON.Color3(0.7,0.7,0.7),
+        color: new BABYLON.Color3(0.7, 0.7, 0.7),
         life: 10,
         speed: 80,
         isBomb: false
@@ -922,8 +1021,8 @@ function createScene() {
 
       const mesh = BABYLON.MeshBuilder.CreateSphere("bomb", { diameter: 2 }, scene);
       const mat = new BABYLON.StandardMaterial("bombMat", scene);
-      mat.diffuseColor = new BABYLON.Color3(0,0,0);
-      mat.specularColor = new BABYLON.Color3(0.1,0.1,0.1);
+      mat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+      mat.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
       mesh.material = mat;
       mesh.position.copyFrom(pos);
 
@@ -935,14 +1034,12 @@ function createScene() {
       body.position.set(pos.x, pos.y, pos.z);
       world.addBody(body);
 
-      const bomb = {
+      projectiles.push({
         mesh,
         body,
         life: 10,
         isBomb: true
-      };
-
-      projectiles.push(bomb);
+      });
     },
     pointerMove() {},
     pointerUp() {}
@@ -1002,11 +1099,10 @@ function createScene() {
 
     let move = forward.scale(input.forward).add(right.scale(input.right));
 
-    // Movement + footsteps
     const isMoving = move.length() > 0.01;
     const onGround = playerBody.position.y <= rig.position.y + 0.2;
 
-        const foot = sounds.footsteps;
+    const foot = sounds.footsteps;
     if (isMoving && onGround) {
       if (foot && foot.loaded && !foot._playing) {
         try { foot.start(); foot._playing = true; } catch(e) {}
@@ -1025,19 +1121,15 @@ function createScene() {
       model.rotation.y = BABYLON.Scalar.Lerp(model.rotation.y, targetAngle, 0.15);
     }
 
-    // Sync physics body to rig XZ
     playerBody.position.x = rig.position.x;
     playerBody.position.z = rig.position.z;
 
-    // Physics step
     world.step(fixedTimeStep, dt, 3);
 
-    // Sync rig to physics body
     rig.position.x = playerBody.position.x;
     rig.position.y = playerBody.position.y - capsuleHeight / 2 + 1;
     rig.position.z = playerBody.position.z;
 
-    // Camera follow
     const headPos = new BABYLON.Vector3(
       rig.position.x,
       rig.position.y + 3.5,
@@ -1056,7 +1148,6 @@ function createScene() {
     camTarget = BABYLON.Vector3.Lerp(camTarget, headPos, dt / followTime);
     camera.setTarget(camTarget);
 
-    // Projectiles update
     for (let i = projectiles.length - 1; i >= 0; i--) {
       const p = projectiles[i];
       p.life -= dt;
@@ -1077,9 +1168,9 @@ function createScene() {
   return scene;
 }
 
-// ============================================================
-// START ENGINE
-// ============================================================
+/* ============================================================
+   START ENGINE
+   ============================================================ */
 
 const scene = createScene();
 engine.runRenderLoop(() => scene.render());
