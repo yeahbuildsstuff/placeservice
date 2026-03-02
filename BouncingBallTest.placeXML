@@ -200,7 +200,12 @@
 <jscript>
 window.toolDeclarations = [
  
-    
+    { type: "Grab",           name: "Grab" },
+    { type: "Copy",           name: "Clone" },
+    { type: "Delete",         name: "Delete" },
+    { type: "SlingShot",      name: "SlingShot" },
+    { type: "Bomb",           name: "Explosives" },
+    { type: "RocketLauncher", name: "Rocket" }
   ];
 </jscript>
 </TOOL_INSTANCES>
@@ -208,3 +213,4 @@ window.toolDeclarations = [
 
 
 </place>
+
