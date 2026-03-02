@@ -1,0 +1,107 @@
+<!DOCTYPE placeXML>
+<place>
+
+  <config>
+  
+	<icon>base64 here</icon>
+    <title>Game</title>  
+	<owner>Yeah</owner>
+	<datecreated>3.1.2026</datecreated>
+	<desc>description here</desc>
+    <CharacterColors
+  ArmHeadColorR="253" ArmHeadColorG="234" ArmHeadColorB="141"
+  TorsoColorR="39"   TorsoColorG="70"   TorsoColorB="45"
+  LegsColorR="110"    LegsColorG="153"    LegsColorB="202"
+	/>
+
+<CharacterSpawn
+  X="0" Y="200" Z="0"
+ />
+
+  </config>
+<div id="appRoot">
+
+  <part
+    name="Baseplate"
+    r="161" g="196" b="140"
+    px="0" py="0.4" pz="0"
+    sx="64" sy="0.4" sz="64"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+  
+  <part
+    name="Ball"
+    r="248" g="248" b="248"
+    px="0" py="300" pz="10"
+    sx="2" sy="2" sz="2"
+    shape="Sphere"
+    draggable="false"
+    collision="true"
+    anchored="false"
+    transparency="0"
+  />
+  
+
+  <decal
+    adornee="Brick1"
+    name="Decal"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Logos/banner.png")'
+    face="Top"
+    transparency="0"
+  />
+
+  <texture
+    adornee="Brick1"
+    name="Texture"
+    studspertilex="2"
+    studspertiley="2"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Studs.png")'
+    face="Bottom"
+    transparency="0"
+  />
+
+<texture
+    adornee="Baseplate"
+    name="Texture2"
+    studspertilex="1"
+    studspertiley="1"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Studs2.0.png")'
+    face="Top"
+    transparency="0.3"
+  />
+
+<texture
+    adornee="Baseplate"
+    name="Texture2"
+    studspertilex="1"
+    studspertiley="1"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Inlet2.0.png")'
+    face="Bottom"
+    transparency="0.3"
+  />
+  
+  
+  <weld part0="Baseplate" part1="Ball" />
+
+  
+  
+<TOOL_INSTANCES>
+<jscript>
+window.toolDeclarations = [
+    { type: "Grab",           name: "Grab" },
+    { type: "Copy",           name: "Clone" },
+    { type: "Delete",         name: "Delete" },
+    { type: "SlingShot",      name: "SlingShot" },
+    { type: "Bomb",           name: "Explosives" },
+    { type: "RocketLauncher", name: "Rocket" }
+  ];
+</jscript>
+</TOOL_INSTANCES>
+
+
+</place>
