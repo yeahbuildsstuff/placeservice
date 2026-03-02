@@ -7,7 +7,7 @@
     <title>Game</title>  
 	<owner>Yeah</owner>
 	<datecreated>3.1.2026</datecreated>
-	<desc>description here</desc>
+	<desc>Testing Game :D</desc>
     <CharacterColors
   ArmHeadColorR="253" ArmHeadColorG="234" ArmHeadColorB="141"
   TorsoColorR="39"   TorsoColorG="70"   TorsoColorB="45"
@@ -106,3 +106,4 @@ window.toolDeclarations = [
 
 
 </place>
+
