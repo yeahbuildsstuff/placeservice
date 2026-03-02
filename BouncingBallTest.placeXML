@@ -4,10 +4,10 @@
   <config>
   
 	<icon>base64 here</icon>
-    <title>Game</title>  
-	<owner>Yeah</owner>
-	<datecreated>3.1.2026</datecreated>
-	<desc>description here</desc>
+    <title>BouncingBallTest</title>  
+	<owner>Admin</owner>
+	<datecreated>3.2.2026</datecreated>
+	<desc>Cannon.js Physics Test Game</desc>
     <CharacterColors
   ArmHeadColorR="253" ArmHeadColorG="234" ArmHeadColorB="141"
   TorsoColorR="39"   TorsoColorG="70"   TorsoColorB="45"
@@ -208,6 +208,7 @@ window.toolDeclarations = [
   ];
 </jscript>
 </TOOL_INSTANCES>
+
 
 
 </place>
