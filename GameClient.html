@@ -349,65 +349,8 @@ window.addEventListener("load", () => {
 
 <script>
 window.addEventListener("load", () => {
-    console.log("[EditGuard] Starting…");
-
-    const params = new URLSearchParams(window.location.search);
-    const placeURL = params.get("place");
-    const currentUser = params.get("user") || "Guest";
-
-    console.log("[EditGuard] placeURL =", placeURL);
-    console.log("[EditGuard] currentUser =", currentUser);
-
-    if (!placeURL) {
-        console.warn("[EditGuard] No place URL provided.");
-        return;
-    }
-
-    fetch(placeURL)
-        .then(res => {
-            console.log("[EditGuard] HTTP status =", res.status);
-            return res.text();
-        })
-        .then(xmlText => {
-            console.log("[EditGuard] XML length =", xmlText.length);
-
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-            let placeOwner = "Unknown";
-            const cfg = xmlDoc.querySelector("config");
-            if (cfg) {
-                const ownerNode = cfg.querySelector("owner");
-                if (ownerNode) {
-                    placeOwner = ownerNode.textContent.trim();
-                }
-            }
-
-            console.log("[EditGuard] placeOwner =", placeOwner);
-
-            // 🔁 keep checking until the button exists
-            const tryHide = () => {
-                const editBtn = document.getElementById("editBtn");
-                console.log("[EditGuard] editBtn found?", !!editBtn);
-
-                if (!editBtn) {
-                    requestAnimationFrame(tryHide);
-                    return;
-                }
-
-                if (currentUser !== placeOwner) {
-                    console.log("[EditGuard] Hiding Edit Mode (user != owner)");
-                    editBtn.style.display = "none";
-                } else {
-                    console.log("[EditGuard] Not hiding Edit Mode (user == owner)");
-                }
-            };
-
-            tryHide();
-        })
-        .catch(err => {
-            console.error("[EditGuard] Failed to load placeXML:", err);
-        });
+	editBtn.style.display = "none";
+    
 });
 </script>
 
@@ -2233,3 +2176,4 @@ window.addEventListener("resize", () => engine.resize());
 </body>
 
 </html>
+
