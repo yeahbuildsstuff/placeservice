@@ -199,11 +199,12 @@
 <TOOL_INSTANCES>
 <jscript>
 window.toolDeclarations = [
-    { type: "SlingShot",      name: "SlingShot" },
+ 
     
   ];
 </jscript>
 </TOOL_INSTANCES>
+
 
 
 </place>
