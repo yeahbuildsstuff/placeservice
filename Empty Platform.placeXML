@@ -33,36 +33,7 @@
   />
 
   
-  <part
-    name="Ball"
-    r="248" g="248" b="248"
-    px="0" py="300" pz="10"
-    sx="2" sy="2" sz="2"
-    shape="Sphere"
-    draggable="false"
-    collision="true"
-    anchored="false"
-    transparency="0"
-  />
-  
-
-  <decal
-    adornee="Brick1"
-    name="Decal"
-    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Logos/banner.png")'
-    face="Top"
-    transparency="0"
-  />
-
-  <texture
-    adornee="Brick1"
-    name="Texture"
-    studspertilex="2"
-    studspertiley="2"
-    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Studs.png")'
-    face="Bottom"
-    transparency="0"
-  />
+ 
 
 <texture
     adornee="Baseplate"
@@ -85,7 +56,7 @@
   />
   
   
-  <weld part0="Baseplate" part1="Ball" />
+  
 
   
   
@@ -100,6 +71,7 @@ window.toolDeclarations = [
 
 
 </place>
+
 
 
 
