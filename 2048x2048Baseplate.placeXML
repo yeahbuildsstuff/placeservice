@@ -23,8 +23,8 @@
   <part
     name="Baseplate"
     r="165" g="165" b="165"
-    px="0" py="0.4" pz="0"
-    sx="2048" sy="0.4" sz="2048"
+    px="0" py="0" pz="0"
+    sx="2048" sy="16" sz="2048"
     shape="Block"
     draggable="false"
     collision="true"
