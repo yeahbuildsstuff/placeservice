@@ -10,8 +10,8 @@
 	<desc>description here</desc>
     <CharacterColors
   ArmHeadColorR="245" ArmHeadColorG="205" ArmHeadColorB="48"
-  TorsoColorR="82"   TorsoColorG="124"   TorsoColorB="174"
-  LegsColorR="110"    LegsColorG="153"    LegsColorB="202"
+  TorsoColorR="33"   TorsoColorG="84"   TorsoColorB="185"
+  LegsColorR="161"    LegsColorG="196"    LegsColorB="140"
 	/>
 
 <CharacterSpawn
@@ -39,12 +39,12 @@
   <part
     name="Floor"
     r="149" g="121" b="119"
-    px="0" py="1.5" pz="10"
+    px="0" py="1.5" pz="20"
     sx="32" sy="2" sz="20"
     shape="Block"
     draggable="false"
     collision="true"
-    anchored="true"
+    anchored="false"
     transparency="0"
   />
   
@@ -82,7 +82,7 @@
   />
   
   
-  <weld part0="Baseplate" part1="Ball" />
+  <weld part0="Baseplate" part1="Floor" />
 
   
   
@@ -98,6 +98,7 @@ window.toolDeclarations = [
   ];
 </jscript>
 </TOOL_INSTANCES>
+
 
 
 </place>
