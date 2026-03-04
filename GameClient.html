@@ -784,10 +784,10 @@ if (spawnNode) {
 
     const mat = new BABYLON.StandardMaterial(name + "_mat", scene);
     mat.diffuseColor = new BABYLON.Color3(r, g, b);
-    mat.specularColor = new BABYLON.Color3(0, 0, 0);
+    mat.specularColor = new BABYLON.Color3(1, 1, 1);
     mat.alpha = 1 - transparency;
     mesh.material = mat;
-
+mat.specularPower = 64;
     mesh.isPickable = true;
     mesh.draggable = draggable;
 
@@ -1187,7 +1187,8 @@ function part(name, w, h, d, y, x = 0, color) {
 
       const innerMat = new BABYLON.StandardMaterial("innerMat", scene);
       innerMat.diffuseColor = brightYellow;
-      innerMat.specularColor = new BABYLON.Color3(0, 0, 0);
+      innerMat.specularColor = new BABYLON.Color3(1,1,1)
+	  innerMat.specularPower = 10;
       headInner.material = innerMat;
 
       const headOuter = headInner.clone("headOuter");
@@ -2176,5 +2177,6 @@ window.addEventListener("resize", () => engine.resize());
 </body>
 
 </html>
+
 
 
