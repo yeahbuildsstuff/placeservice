@@ -44,7 +44,7 @@
     shape="Block"
     draggable="false"
     collision="true"
-    anchored="false"
+    anchored="true"
     transparency="0"
   />
   
@@ -102,3 +102,4 @@ window.toolDeclarations = [
 
 
 </place>
+
