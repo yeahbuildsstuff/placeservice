@@ -48,6 +48,44 @@
     transparency="0"
   />
   
+
+ <part
+    name="Step"
+    r="149" g="121" b="119"
+    px="0" py="1.5" pz="9"
+    sx="8" sy="1" sz="2"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Ceiling"
+    r="215" g="197" b="154"
+    px="0" py="12" pz="20"
+    sx="32" sy="2" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Ceiling2"
+    r="215" g="197" b="154"
+    px="0" py="13.5" pz="20"
+    sx="28" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
   <part
     name="Wall_01"
     r="215" g="197" b="154"
@@ -60,6 +98,417 @@
     transparency="0"
   />
   
+
+<part
+    name="Ceiling3"
+    r="215" g="197" b="154"
+    px="0" py="14.5" pz="20"
+    sx="24" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Ceiling3"
+    r="215" g="197" b="154"
+    px="0" py="15.5" pz="20"
+    sx="20" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Ceiling4"
+    r="215" g="197" b="154"
+    px="0" py="16.5" pz="20"
+    sx="16" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Ceiling5"
+    r="215" g="197" b="154"
+    px="0" py="17.5" pz="20"
+    sx="12" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Ceiling6"
+    r="215" g="197" b="154"
+    px="0" py="18.5" pz="20"
+    sx="8" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Ceiling7"
+    r="215" g="197" b="154"
+    px="0" py="19.5" pz="20"
+    sx="4" sy="1" sz="20"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+
+
+
+
+<part
+    name="CeilingTile1"
+ r="196" g="40" b="28"
+   
+    px="0" py="20.5" pz="20"
+    sx="4" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="CeilingTile2"
+ r="196" g="40" b="28"
+   
+    px="3" py="19.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile3"
+ r="196" g="40" b="28"
+   
+    px="5" py="18.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile4"
+ r="196" g="40" b="28"
+   
+    px="7" py="17.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile5"
+ r="196" g="40" b="28"
+   
+    px="9" py="16.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile6"
+ r="196" g="40" b="28"
+   
+    px="11" py="15.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile7"
+ r="196" g="40" b="28"
+   
+    px="13" py="14.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile8"
+ r="196" g="40" b="28"
+   
+    px="15" py="13.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile9"
+ r="196" g="40" b="28"
+   
+    px="17" py="12.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+
+
+
+
+
+
+
+<part
+    name="CeilingTile2"
+ r="196" g="40" b="28"
+   
+    px="-3" py="19.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile3"
+ r="196" g="40" b="28"
+   
+    px="-5" py="18.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile4"
+ r="196" g="40" b="28"
+   
+    px="-7" py="17.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile5"
+ r="196" g="40" b="28"
+   
+    px="-9" py="16.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile6"
+ r="196" g="40" b="28"
+   
+    px="-11" py="15.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile7"
+ r="196" g="40" b="28"
+   
+    px="-13" py="14.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile8"
+ r="196" g="40" b="28"
+   
+    px="-15" py="13.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="CeilingTile9"
+ r="196" g="40" b="28"
+   
+    px="-17" py="12.5" pz="20"
+    sx="2" sy="1" sz="24"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<part
+    name="Wall_02"
+    r="215" g="197" b="154"
+    px="10" py="4.5" pz="11"
+    sx="12" sy="3" sz="2"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Wall_02-2"
+    r="215" g="197" b="154"
+    px="10" py="10" pz="11"
+    sx="12" sy="2" sz="2"
+    shape="Block"
+    draggable="true"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Wall_02-3"
+    r="215" g="197" b="154"
+    px="5" py="7.5" pz="11"
+    sx="2" sy="3" sz="2"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Wall_02-4"
+    r="215" g="197" b="154"
+    px="15" py="7.5" pz="11"
+    sx="2" sy="3" sz="2"
+    shape="Block"
+    draggable="false"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+<part
+    name="Wall_03"
+    r="215" g="197" b="154"
+    px="-10" py="7" pz="11"
+    sx="12" sy="8" sz="2"
+    shape="Block"
+    draggable="true"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Wall_04"
+    r="215" g="197" b="154"
+    px="-15" py="7" pz="20"
+    sx="2" sy="8" sz="16"
+    shape="Block"
+    draggable="true"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
+
+
+<part
+    name="Wall_05"
+    r="215" g="197" b="154"
+    px="15" py="7" pz="20"
+    sx="2" sy="8" sz="16"
+    shape="Block"
+    draggable="true"
+    collision="true"
+    anchored="true"
+    transparency="0"
+  />
 
 <texture
     adornee="Baseplate"
@@ -82,6 +531,42 @@
   />
   
   
+
+<texture
+    adornee="Floor"
+    name="Texture3"
+    studspertilex="1"
+    studspertiley="1"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Studs2.0.png")'
+    face="Top"
+    transparency="0.3"
+  />
+
+
+<texture
+    adornee="Step"
+    name="Texture4"
+    studspertilex="1"
+    studspertiley="1"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Studs2.0.png")'
+    face="Top"
+    transparency="0.3"
+  />
+
+
+<texture
+    adornee="Wall_02"
+    name="Texture4"
+    studspertilex="1"
+    studspertiley="1"
+    texture='url("https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/Surfaces/Weld.png")'
+    face="Top"
+    transparency="0.3"
+  />
+
+
+
+
   <luascript 
   
   while true do
