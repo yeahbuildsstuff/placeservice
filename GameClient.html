@@ -988,7 +988,7 @@ function createScene() {
 
   scene.clearColor = new BABYLON.Color3(1, 1, 1);
 
-  const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000 }, scene);
+  const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 10000 }, scene);
   const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
 
   skyboxMaterial.backFaceCulling = false;
@@ -1015,10 +1015,11 @@ function createScene() {
   spriteManagerSun.renderingGroupId = 0;
 
   const sunSprite = new BABYLON.Sprite("sun", spriteManagerSun);
-  sunSprite.size = 160;
-  sunSprite.position = new BABYLON.Vector3(200, 100, 200);
+  sunSprite.size = 1500;
+  sunSprite.position = new BABYLON.Vector3(3000, 3000, 3000);
+  
   sunSprite.isPickable = false;
-  sunSprite.renderingGroupId = 0;
+  sunSprite.renderingGroupId = 10;
   
   
   
