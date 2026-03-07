@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini Studio – Freefly + Textures/Decals</title>
+<style>
+  body { margin:0; overflow:hidden; font-family:monospace; }
+
+  #layout {
+    display:flex;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  #renderCanvas {
+    flex:1;
+    min-width:0;
+    background:#000;
+  }
+
+  #xmlEditor {
+    width:400px;
+    flex-shrink:0;
+    height:100%;
+    font-size:14px;
+    padding:10px;
+    border:none;
+    outline:none;
+    resize:none;
+  }
+</style>
+</head>
+<body>
+
+<div id="layout">
+  <canvas id="renderCanvas"></canvas>
+  <textarea id="xmlEditor">
+<place>
+  <part name="Block1" r="255" g="0" b="0" px="0" py="2" pz="0" sx="4" sy="1" sz="4" />
+  <part name="Block2" r="0" g="255" b="0" px="6" py="2" pz="0" sx="4" sy="1" sz="4" />
+
+  <texture adornee="Block1"
+           texture="https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/test_texture.png"
+           face="Top"
+           studspertilex="2"
+           studspertiley="2"
+           transparency="0" />
+
+  <decal adornee="Block2"
+         texture="https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/test_decal.png"
+         face="Front"
+         transparency="0.2" />
+</place>
+  </textarea>
+</div>
+
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+<script>
+// ----------------------
+// BASIC BABYLON SETUP
+// ----------------------
+const canvas = document.getElementById("renderCanvas");
+const engine = new BABYLON.Engine(canvas, true);
+const scene = new BABYLON.Scene(engine);
+
+// camera (manual free-fly)
+const camera = new BABYLON.FreeCamera("freecam", new BABYLON.Vector3(0, 5, -15), scene);
+camera.minZ = 0.1;
+camera.maxZ = 10000;
+camera.fov = 0.9;
+camera.inputs.clear(); // disable Babylon inputs
+
+// LIGHTING + SKYBOX
+const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000 }, scene);
+const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
+skyboxMaterial.backFaceCulling = false;
+skyboxMaterial.disableLighting = true;
+skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
+  "https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/null_plainsky512/null_plainsky512",
+  scene,
+  ["_rt.jpg","_up.jpg","_ft.jpg","_lf.jpg","_dn.jpg","_bk.jpg"]
+);
+skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+skybox.material = skyboxMaterial;
+skybox.infiniteDistance = true;
+
+const spriteManagerSun = new BABYLON.SpriteManager(
+  "sunManager",
+  "https://raw.githubusercontent.com/yeahbuildsstuff/GameAssetServiceRepo/main/sun.png",
+  1,
+  { width: 512, height: 512 },
+  scene
+);
+spriteManagerSun.renderingGroupId = 0;
+const sunSprite = new BABYLON.Sprite("sun", spriteManagerSun);
+sunSprite.size = 160;
+sunSprite.position = new BABYLON.Vector3(200, 100, 200);
+sunSprite.isPickable = false;
+
+const sun = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(-1, -1, -1), scene);
+sun.position = new BABYLON.Vector3(10, 20, -10);
+sun.intensity = 0.13335;
+
+const ambient = new BABYLON.HemisphericLight("ambient", new BABYLON.Vector3(0, 1, 0), scene);
+ambient.intensity = 0.95;
+
+window.namedParts = {};
+
+// ----------------------
+// HELPERS FOR FACES
+// ----------------------
+function getFaceSize(target, face) {
+    const bb = target.getBoundingInfo().boundingBox;
+    const e = bb.extendSize;
+    switch (face) {
+        case "Top":
+        case "Bottom": return new BABYLON.Vector2(e.x * 2, e.z * 2);
+        case "Front":
+        case "Back":   return new BABYLON.Vector2(e.x * 2, e.y * 2);
+        case "Left":
+        case "Right":  return new BABYLON.Vector2(e.z * 2, e.y * 2);
+    }
+    return new BABYLON.Vector2(e.x * 2, e.z * 2);
+}
+
+function createFacePlane(target, face, scene) {
+    const size2D = getFaceSize(target, face);
+    const plane = BABYLON.MeshBuilder.CreatePlane(
+        target.name + "_face_" + face + "_" + Math.random().toString(36).slice(2),
+        { width: size2D.x, height: size2D.y },
+        scene
+    );
+    plane.parent = target;
+
+    const bb = target.getBoundingInfo().boundingBox;
+    const e = bb.extendSize;
+    const o = 0.01;
+
+    switch (face) {
+        case "Top":    plane.position = new BABYLON.Vector3(0, e.y+o, 0); plane.rotation = new BABYLON.Vector3(Math.PI/2,0,0); break;
+        case "Bottom": plane.position = new BABYLON.Vector3(0,-e.y-o, 0); plane.rotation = new BABYLON.Vector3(-Math.PI/2,0,0); break;
+        case "Front":  plane.position = new BABYLON.Vector3(0,0,-e.z-o); plane.rotation = new BABYLON.Vector3(0,Math.PI,0); break;
+        case "Back":   plane.position = new BABYLON.Vector3(0,0, e.z+o); plane.rotation = new BABYLON.Vector3(0,0,0); break;
+        case "Left":   plane.position = new BABYLON.Vector3(-e.x-o,0,0); plane.rotation = new BABYLON.Vector3(0,-Math.PI/2,0); break;
+        case "Right":  plane.position = new BABYLON.Vector3( e.x+o,0,0); plane.rotation = new BABYLON.Vector3(0, Math.PI/2,0); break;
+    }
+
+    return plane;
+}
+
+function extractUrlAttr(a) { return a ? a.trim() : null; }
+
+// ----------------------
+// XML LOADER
+// ----------------------
+function LOAD_PLACE_FROM_XML(xmlString, scene) {
+    scene.meshes.slice().forEach(m => { if (m.name !== "skyBox") m.dispose(); });
+    window.namedParts = {};
+
+    const xml = new DOMParser().parseFromString(xmlString, "text/xml");
+
+    // PARTS
+    const parts = xml.getElementsByTagName("part");
+    for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        const name = p.getAttribute("name") || ("Part_" + i);
+
+        const r = (parseFloat(p.getAttribute("r")||"200"))/255;
+        const g = (parseFloat(p.getAttribute("g")||"200"))/255;
+        const b = (parseFloat(p.getAttribute("b")||"200"))/255;
+
+        const px = parseFloat(p.getAttribute("px")||"0");
+        const py = parseFloat(p.getAttribute("py")||"0");
+        const pz = parseFloat(p.getAttribute("pz")||"0");
+
+        const sx = parseFloat(p.getAttribute("sx")||"4");
+        const sy = parseFloat(p.getAttribute("sy")||"1");
+        const sz = parseFloat(p.getAttribute("sz")||"4");
+
+        const shape = p.getAttribute("shape") || "Block";
+
+        let mesh;
+        if (shape === "Sphere") {
+            mesh = BABYLON.MeshBuilder.CreateSphere(name, { diameterX:sx, diameterY:sy, diameterZ:sz }, scene);
+        } else if (shape === "Cylinder") {
+            mesh = BABYLON.MeshBuilder.CreateCylinder(name, { diameterTop:sx, diameterBottom:sx, height:sy }, scene);
+        } else {
+            mesh = BABYLON.MeshBuilder.CreateBox(name, { width:sx, height:sy, depth:sz }, scene);
+        }
+
+        mesh.position = new BABYLON.Vector3(px, py, pz);
+
+        const mat = new BABYLON.StandardMaterial(name+"_mat", scene);
+        mat.diffuseColor = new BABYLON.Color3(r,g,b);
+        mesh.material = mat;
+
+        window.namedParts[name] = mesh;
+    }
+
+    // TEXTURES
+    const textures = xml.getElementsByTagName("texture");
+    for (let i = 0; i < textures.length; i++) {
+        const t = textures[i];
+        const target = window.namedParts[t.getAttribute("adornee")];
+        if (!target) continue;
+
+        const texUrl = extractUrlAttr(t.getAttribute("texture"));
+        if (!texUrl) continue;
+
+        const face = t.getAttribute("face") || "Top";
+        const studsX = parseFloat(t.getAttribute("studspertilex")||"1");
+        const studsY = parseFloat(t.getAttribute("studspertiley")||"1");
+        const transparency = parseFloat(t.getAttribute("transparency")||"0");
+
+        const plane = createFacePlane(target, face, scene);
+        const mat = new BABYLON.StandardMaterial("textureMat_"+i, scene);
+        const tex = new BABYLON.Texture(texUrl, scene);
+
+        const size2D = getFaceSize(target, face);
+        tex.uScale = size2D.x / studsX;
+        tex.vScale = size2D.y / studsY;
+        tex.hasAlpha = true;
+
+        mat.diffuseTexture = tex;
+        mat.opacityTexture = tex;
+        mat.alpha = 1 - transparency;
+        mat.backFaceCulling = false;
+
+        plane.material = mat;
+    }
+
+    // DECALS
+    const decals = xml.getElementsByTagName("decal");
+    for (let i = 0; i < decals.length; i++) {
+        const d = decals[i];
+        const target = window.namedParts[d.getAttribute("adornee")];
+        if (!target) continue;
+
+        const texUrl = extractUrlAttr(d.getAttribute("texture"));
+        if (!texUrl) continue;
+
+        const face = d.getAttribute("face") || "Top";
+        const transparency = parseFloat(d.getAttribute("transparency")||"0");
+
+        const plane = createFacePlane(target, face, scene);
+        const mat = new BABYLON.StandardMaterial("decalMat_"+i, scene);
+        const tex = new BABYLON.Texture(texUrl, scene);
+
+        tex.hasAlpha = true;
+        mat.diffuseTexture = tex;
+        mat.alpha = 1 - transparency;
+        mat.backFaceCulling = false;
+
+        plane.material = mat;
+    }
+}
+
+// ----------------------
+// FREE-FLY CAMERA (movementX/movementY)
+// ----------------------
+let camPos = camera.position.clone();
+let camVel = new BABYLON.Vector3(0,0,0);
+let camYaw = 0;
+let camPitch = 0;
+
+let rotating = false;
+let rotVelYaw = 0;
+let rotVelPitch = 0;
+
+const ROT_ACCEL = 0.001;
+const ROT_DAMP  = 0.8;
+
+const MOVE_ACCEL = 0.80;
+const MOVE_DAMP  = 0.80;
+const MAX_SPEED  = 0.4;
+
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+window.addEventListener("keyup",   e => keys[e.key.toLowerCase()] = false);
+
+canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+canvas.addEventListener("pointerdown", e => {
+    if (e.button === 2) rotating = true;
+});
+canvas.addEventListener("pointerup", e => {
+    if (e.button === 2) rotating = false;
+});
+canvas.addEventListener("pointermove", e => {
+    if (!rotating) return;
+    rotVelYaw   += e.movementX * ROT_ACCEL;
+    rotVelPitch -= e.movementY * ROT_ACCEL;
+});
+
+function updateCamera() {
+    rotVelYaw   *= ROT_DAMP;
+    rotVelPitch *= ROT_DAMP;
+
+    camYaw   += rotVelYaw;
+    camPitch += rotVelPitch;
+
+    const maxPitch = Math.PI/2 - 0.01;
+    camPitch = Math.max(-maxPitch, Math.min(maxPitch, camPitch));
+
+    const forward = new BABYLON.Vector3(
+        Math.sin(camYaw) * Math.cos(camPitch),
+        Math.sin(camPitch),
+        Math.cos(camYaw) * Math.cos(camPitch)
+    ).normalize();
+
+    const right = BABYLON.Vector3.Cross(forward, BABYLON.Axis.Y).normalize().scale(-1);
+
+    let moveDir = new BABYLON.Vector3(0,0,0);
+    if (keys["w"]) moveDir.addInPlace(forward);
+    if (keys["s"]) moveDir.addInPlace(forward.scale(-1));
+    if (keys["a"]) moveDir.addInPlace(right.scale(-1));
+    if (keys["d"]) moveDir.addInPlace(right);
+
+    if (!moveDir.equals(BABYLON.Vector3.Zero())) {
+        moveDir.normalize();
+        camVel.addInPlace(moveDir.scale(MOVE_ACCEL));
+    }
+
+    camVel.scaleInPlace(MOVE_DAMP);
+
+    const speed = camVel.length();
+    if (speed > MAX_SPEED) camVel.scaleInPlace(MAX_SPEED / speed);
+
+    camPos.addInPlace(camVel);
+
+    camera.position.copyFrom(camPos);
+    camera.setTarget(camPos.add(forward));
+}
+
+// ----------------------
+// AUTO-RELOAD XML (50ms debounce)
+// ----------------------
+let xmlTimer = null;
+document.getElementById("xmlEditor").addEventListener("input", () => {
+    clearTimeout(xmlTimer);
+    xmlTimer = setTimeout(() => {
+        LOAD_PLACE_FROM_XML(document.getElementById("xmlEditor").value, scene);
+    }, 50);
+});
+
+// ----------------------
+// INITIAL LOAD
+// ----------------------
+LOAD_PLACE_FROM_XML(document.getElementById("xmlEditor").value, scene);
+
+// ----------------------
+// RENDER LOOP
+// ----------------------
+engine.runRenderLoop(() => {
+    updateCamera();
+    scene.render();
+});
+window.addEventListener("resize", () => engine.resize());
+</script>
+
+</body>
+</html>
