@@ -9,7 +9,7 @@
 	<datecreated>3.6.2026</datecreated>
 	<desc>A House with some Trees :D</desc>
     <CharacterColors
-  ArmHeadColorR="255" ArmHeadColorG="223" ArmHeadColorB="105"
+  ArmHeadColorR="253" ArmHeadColorG="234" ArmHeadColorB="141"
   TorsoColorR="175"   TorsoColorG="221"   TorsoColorB="255"
   LegsColorR="161"    LegsColorG="196"    LegsColorB="140"
 	/>
@@ -833,5 +833,6 @@ window.toolDeclarations = [
 
 
 </place>
+
 
 
